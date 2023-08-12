@@ -9,6 +9,7 @@ app.post("/", async (c) => {
   if (xMisskeyHookSecret == secret) {
     const json = await c.req.json();
     const note = json.note as Note;
+    console.log(note);
     if (note.channelId == null) {
       console.log("channelId is null");
       return c.json({ result: "channelId is null" }, 200);
