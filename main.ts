@@ -7,8 +7,8 @@ app.post("/", async (c) => {
   const xMisskeyHookSecret = c.req.header("x-misskey-hook-secret");
   const secret = Deno.env.get("MISSKEY_HOOK_SECRET");
   if (xMisskeyHookSecret == secret) {
-    const note = await c.req.json() as Note;
-    console.log(note);
+    const json = await c.req.json();
+    const note = json.body.note as Note;
     if (note.channelId == null) {
       console.log("channelId is null");
       return c.json({ result: "channelId is null" }, 200);
