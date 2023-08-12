@@ -6,31 +6,39 @@ const app = new Hono();
 app.post("/", async (c) => {
   const xMisskeyHookSecret = c.req.header("x-misskey-hook-secret");
   const secret = Deno.env.get("MISSKEY_HOOK_SECRET");
-  if (xMisskeyHookSecret == secret) {
-    const json = await c.req.json();
-    console.log(json);
-    const note = json.body.note as Note;
-    if (note.channelId == null) {
-      console.log("channelId is null");
-      return c.json({ result: "channelId is null" }, 200);
-    } else if (note.channelId != null) {
-      console.log("post to mastodon");
-      const res = await postToMastodon(
-        note.text! + ` from:BackspaceKey#${note.channel!.name}`,
-        note.cw,
-      );
-      console.log(res);
-      if (res.status != 200) {
-        return c.json({ result: "ng" }, 400);
-      } else {
-        return c.json({ result: "ok" }, 200);
-      }
-    }
-  } else {
+
+  if (xMisskeyHookSecret !== secret) {
+    return c.json({ result: "Secret key mismatch" }, 400);
+  }
+
+  const json = await c.req.json();
+  console.log(json);
+
+  const note = json.body.note as Note;
+
+  if (note.channelId == null) {
+    console.log("channelId is null");
+    return c.json({ result: "channelId is null" }, 200);
+  }
+
+  console.log("post to mastodon");
+  const res = await postToMastodon(
+    note.text! + ` from:BackspaceKey#${note.channel!.name}`,
+    note.cw,
+  );
+
+  console.log(res);
+
+  if (res.status != 200) {
     return c.json({ result: "ng" }, 400);
   }
+
+  return c.json({ result: "ok" }, 200);
 });
 
+/**
+ * マストドンに投稿する
+ */
 async function postToMastodon(
   text: string,
   cw: string | null,
