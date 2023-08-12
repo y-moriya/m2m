@@ -8,14 +8,34 @@ app.post("/", async (c) => {
   const secret = Deno.env.get("MISSKEY_HOOK_SECRET");
   if (xMisskeyHookSecret == secret) {
     const json = await c.req.json();
-    console.log(json);
-    return c.json({ result: "ok" }, 200);
+    const note = json.note as Note;
+    if (note.channelId == null) {
+      console.log("channelId is null");
+      return c.json({ result: "channelId is null" }, 200);
+    } else if (note.channelId != null) {
+      console.log("post to mastodon");
+      const res = await postToMastodon(
+        note.text! + ` on: ${note.channel!.name}`,
+        note.cw,
+        note.visibility,
+      );
+      console.log(res);
+      if (res.status != 200) {
+        return c.json({ result: "ng" }, 400);
+      } else {
+        return c.json({ result: "ok" }, 200);
+      }
+    }
   } else {
     return c.json({ result: "ng" }, 400);
   }
 });
 
-async function postToMastodon(text: string) {
+async function postToMastodon(
+  text: string,
+  cw: string | null,
+  visibility: string,
+) {
   const url = Deno.env.get("MASTODON_SERVER_URL");
   const token = Deno.env.get("MASTODON_ACCESS_TOKEN");
   const res = await fetch(url + "/api/v1/statuses", {
@@ -26,6 +46,8 @@ async function postToMastodon(text: string) {
     },
     body: JSON.stringify({
       status: text,
+      spoiler_text: cw,
+      visibility: visibility,
     }),
   });
   return res;
@@ -39,6 +61,8 @@ interface Note {
   user: User;
   userId: string;
   visibility: string;
+  channel: Channel | null;
+  channelId: string | null;
 }
 
 interface User {
@@ -50,6 +74,12 @@ interface User {
   onlineStatus: string;
   avatarUrl: string;
   avatarBlurhash: string;
+}
+
+interface Channel {
+  id: string;
+  name: string;
+  color: string;
 }
 
 Deno.serve(app.fetch);
