@@ -16,7 +16,7 @@ app.post("/", async (c) => {
     } else if (note.channelId != null) {
       console.log("post to mastodon");
       const res = await postToMastodon(
-        note.text! + ` from:BackspaceKey.fm#${note.channel!.name}`,
+        note.text! + ` from:BackspaceKey#${note.channel!.name}`,
         note.cw,
       );
       console.log(res);
