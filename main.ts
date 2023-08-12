@@ -8,6 +8,7 @@ app.post("/", async (c) => {
   const secret = Deno.env.get("MISSKEY_HOOK_SECRET");
   if (xMisskeyHookSecret == secret) {
     const json = await c.req.json();
+    console.log(json);
     const note = json.body.note as Note;
     if (note.channelId == null) {
       console.log("channelId is null");
@@ -15,9 +16,8 @@ app.post("/", async (c) => {
     } else if (note.channelId != null) {
       console.log("post to mastodon");
       const res = await postToMastodon(
-        note.text! + ` on: ${note.channel!.name}`,
+        note.text! + ` from:BackspaceKey.fm#${note.channel!.name}`,
         note.cw,
-        note.visibility,
       );
       console.log(res);
       if (res.status != 200) {
@@ -34,7 +34,6 @@ app.post("/", async (c) => {
 async function postToMastodon(
   text: string,
   cw: string | null,
-  visibility: string,
 ) {
   const url = Deno.env.get("MASTODON_SERVER_URL");
   const token = Deno.env.get("MASTODON_ACCESS_TOKEN");
@@ -47,7 +46,6 @@ async function postToMastodon(
     body: JSON.stringify({
       status: text,
       spoiler_text: cw,
-      visibility: visibility,
     }),
   });
   return res;
